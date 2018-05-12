@@ -73,13 +73,9 @@ func main() {
 		panic(err)
 	}
 
-	switch *version {
-	case "major":
-		v.Update(Major)
-	case "minor":
-		v.Update(Minor)
-	case "patch":
-		v.Update(Patch)
+	var sections = map[string]int{"major": Major, "minor": Minor, "patch": Patch}
+	if section, ok := sections[*version]; ok {
+		v.Update(section)
 	}
 
 	fmt.Printf("Project [%s] will be updated to Version [%s], is this correct? (y/n)\n", *directory, v)
