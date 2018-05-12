@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -22,30 +23,38 @@ const (
 
 // Version represents a SemVer version i.e. 1.0.0
 type Version struct {
-	Parts []int
+	Major int
+	Minor int
+	Patch int
 }
 
 // Set takes in a SemVer version string and splits it into parts
-func (version *Version) Set(v string) error {
-	version.Parts = make([]int, 3, 3)
+func (version *Version) Set(v string) (err error) {
 	parts := strings.Split(v, ".")
 
-	var err error
-	version.Parts[Major], err = strconv.Atoi(parts[Major])
-	version.Parts[Minor], err = strconv.Atoi(parts[Minor])
-	version.Parts[Patch], err = strconv.Atoi(parts[Patch])
+	version.Major, err = strconv.Atoi(parts[Major])
+	version.Minor, err = strconv.Atoi(parts[Minor])
+	version.Patch, err = strconv.Atoi(parts[Patch])
 
 	return err
 }
 
 // Update will take in a version section and increment it
-func (version *Version) Update(section int) {
-	version.Parts[section]++
+func (version *Version) Update(section string) error {
+	r := reflect.ValueOf(version).Elem().FieldByName(section)
+	if r.IsValid() {
+		current := reflect.ValueOf(version).Elem().FieldByName(section).Int()
+		r.SetInt(current + 1)
+
+		return nil
+	}
+
+	return fmt.Errorf("invalid section [%s] passed to update", section)
 }
 
 // String will implement the stringer interface, and return the SemVer versioning string
 func (version Version) String() string {
-	return fmt.Sprintf("%d.%d.%d", version.Parts[Major], version.Parts[Minor], version.Parts[Patch])
+	return fmt.Sprintf("%d.%d.%d", version.Major, version.Minor, version.Patch)
 }
 
 func main() {
@@ -73,9 +82,9 @@ func main() {
 		panic(err)
 	}
 
-	var sections = map[string]int{"major": Major, "minor": Minor, "patch": Patch}
-	if section, ok := sections[*version]; ok {
-		v.Update(section)
+	err = v.Update(*version)
+	if err != nil {
+		panic(err)
 	}
 
 	fmt.Printf("Project [%s] will be updated to Version [%s], is this correct? (y/n)\n", *directory, v)
