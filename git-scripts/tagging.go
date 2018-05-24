@@ -41,6 +41,7 @@ func (version *Version) Set(v string) (err error) {
 
 // Update will take in a version section and increment it
 func (version *Version) Update(section string) error {
+	section = strings.Title(section)
 	r := reflect.ValueOf(version).Elem().FieldByName(section)
 	if r.IsValid() {
 		current := reflect.ValueOf(version).Elem().FieldByName(section).Int()
@@ -103,7 +104,7 @@ func main() {
 	cmd = exec.Command("/bin/sh", "-c", commandSequence)
 	cmd.Run()
 
-	fmt.Printf("Tags updated locally, would you like to push to remote? (y/n)")
+	fmt.Printf("Tags updated locally, would you like to push to remote? (y/n)\n")
 
 	input, err = reader.ReadString('\n')
 	if err != nil {
